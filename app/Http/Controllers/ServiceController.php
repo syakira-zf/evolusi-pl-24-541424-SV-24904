@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ServiceController extends Controller
 {
@@ -25,7 +26,14 @@ class ServiceController extends Controller
             'name' => 'required|string|max:255',
             'price' => 'required|integer|min:0',
             'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request
+                ->file('image')
+                ->store('services', 'public');
+        }
 
         Service::create($validated);
 
@@ -45,7 +53,19 @@ class ServiceController extends Controller
             'name' => 'required|string|max:255',
             'price' => 'required|integer|min:0',
             'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
+
+        if ($request->hasFile('image')) {
+
+            if ($service->image) {
+                Storage::disk('public')->delete($service->image);
+            }
+
+            $validated['image'] = $request
+                ->file('image')
+                ->store('services', 'public');
+        }
 
         $service->update($validated);
 
@@ -56,6 +76,10 @@ class ServiceController extends Controller
 
     public function destroy(Service $service)
     {
+        if ($service->image) {
+            Storage::disk('public')->delete($service->image);
+        }
+
         $service->delete();
 
         return redirect()
